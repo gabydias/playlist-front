@@ -1,0 +1,59 @@
+# Nome do Workflow
+name: Frontend Pipeline - Hackathon
+
+# Evento que irá acionar a pipeline
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  Build:
+      name: Build
+      runs-on: ubuntu-latest
+      steps: 
+        - name: Clone do Repositório
+          uses: actions/checkout@v2
+
+        - name: Login no Google Artifact Registry
+          env:
+            GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          run: | 
+            echo '${{ secrets.GOOGLE_CREDENTIALS }}' > key.json
+            cat key.json | docker login -u _json_key --password-stdin https://us-central1-docker.pkg.dev/
+
+        - name: Build Imag & Push para Google Registry
+          env: 
+            ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
+            BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          run: | 
+            envsubst < src/App.js > src/App.js 
+            docker build -t ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest .
+            docker push ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest
+
+  Deploy:
+    needs: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone do Repositório
+        uses: actions/checkout@v2
+
+      - name: Autenticação no Google Cloud
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+      - name: Deploy Frontend no  Cloud Run
+        id: deploy
+        run: |-
+          gcloud run deploy frontend \
+            --quiet \
+            --region  ${{ secrets.GOOGLE_REGION }} \
+            --image ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest \
+            --platform managed \
+            --allow-unauthenticated \
+            --project ${{ secrets.GOOGLE_PROJECT_ID }} \
+            --format json
