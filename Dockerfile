@@ -8,7 +8,6 @@ RUN yarn build
 # server environment
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/configfile.template
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 ENV PORT 8080
 ENV HOST 0.0.0.0
 RUN sh -c "envsubst '\$PORT'  < /etc/nginx/conf.d/configfile.template > /etc/nginx/conf.d/default.conf"
