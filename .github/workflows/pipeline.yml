@@ -22,16 +22,21 @@ jobs:
             echo '${{ secrets.GOOGLE_CREDENTIALS }}' > key.json
             cat key.json | docker login -u _json_key --password-stdin https://us-central1-docker.pkg.dev/
 
+        - name: Replace Backend URL
+          env: 
+            BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          run: |
+            envsubst < src/App.js > src/App.js.tmp && mv src/App.js.tmp src/App.js 
+
         - name: Build Imag & Push para Google Registry
           env: 
             ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
-            BACKEND_URL: ${{ secrets.BACKEND_URL }}
           run: | 
-            echo $BACKEND_URL
-            envsubst < src/App.js > src/App.js 
-            grep fetch src/App.js
             docker build -t ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest .
             docker push ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest
+
+        - name: Show file
+          run: cat src/App.js
 
   Deploy:
     needs: Build
