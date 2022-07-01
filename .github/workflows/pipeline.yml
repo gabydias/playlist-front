@@ -20,7 +20,7 @@ jobs:
             GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
           run: | 
             echo '${{ secrets.GOOGLE_CREDENTIALS }}' > key.json
-            cat key.json | docker login -u _json_key --password-stdin https://us-central1-docker.pkg.dev/
+            cat key.json | docker login -u _json_key --password-stdin https://us-east4-docker.pkg.dev/
 
         - name: Build Imag & Push para Google Registry
           env: 
