@@ -13,14 +13,14 @@ jobs:
       runs-on: ubuntu-latest
       steps: 
         - name: Clone do Repositório
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
 
         - name: Login no Google Artifact Registry
           env:
             GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
           run: | 
             echo '${{ secrets.GOOGLE_CREDENTIALS }}' > key.json
-            cat key.json | docker login -u _json_key --password-stdin https://us-east4-docker.pkg.dev/
+            cat key.json | docker login -u _json_key --password-stdin us-docker.pkg.dev
 
         - name: Build Imag & Push para Google Registry
           env: 
@@ -30,16 +30,13 @@ jobs:
             docker build -t ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest --build-arg BACKEND_URL=${{ secrets.BACKEND_URL }} .
             docker push ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest
 
-        - name: Show file
-          run: cat src/App.js
-
   Deploy:
     needs: Build
     runs-on: ubuntu-latest
 
     steps:
       - name: Clone do Repositório
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Autenticação no Google Cloud
         env:
