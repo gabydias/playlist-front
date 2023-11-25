@@ -1,7 +1,7 @@
 ##### Ambiente de Build
 FROM node:latest as react-build
 
-ARG BACKEND_URL=https://backend-dbimvrz77a-uw.a.run.app
+ARG BACKEND_URL=url
 
 WORKDIR /app
 COPY . ./

@@ -6,7 +6,7 @@ function App() {
    	const [data, setData] = useState([]);
 
 	useEffect(() => {
-		fetch("https://backend-dbimvrz77a-uw.a.run.app")
+		fetch("$BACKEND_URL")
 		 .then((res) => res.json())
       		 .then((result) => setData(result))
       		 .catch((err) => console.log("error"));

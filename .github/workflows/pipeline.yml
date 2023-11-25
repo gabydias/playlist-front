@@ -30,7 +30,7 @@ jobs:
 
       - name: Build & Push Image
         run: | 
-          docker build -t ${{ vars.GOOGLE_ARTIFACT }}/${{ vars.GOOGLE_PROJECT_ID }}/${{ vars.GOOGLE_REPONAME }}/${{ vars.GOOGLE_MYAPP }}-front:latest --build-arg BACKEND_URL=${{ secrets.BACKEND_URL }} .
+          docker build -t ${{ vars.GOOGLE_ARTIFACT }}/${{ vars.GOOGLE_PROJECT_ID }}/${{ vars.GOOGLE_REPONAME }}/${{ vars.GOOGLE_MYAPP }}-front:latest --build-arg BACKEND_URL=${{ vars.BACKEND_URL }} .
           docker push ${{ vars.GOOGLE_ARTIFACT }}/${{ vars.GOOGLE_PROJECT_ID }}/${{ vars.GOOGLE_REPONAME }}/${{ vars.GOOGLE_MYAPP }}-front:latest
 
   Deploy:
