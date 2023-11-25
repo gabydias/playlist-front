@@ -9,49 +9,53 @@ on:
 
 jobs:
   Build:
-      name: Build
-      runs-on: ubuntu-latest
-      steps: 
-        - name: Clone do Repositório
-          uses: actions/checkout@v3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download do Repositório
+        uses: actions/checkout@v4       # https://github.com/actions/checkout
+        with:
+          fetch-depth: 0
 
-        - name: Login no Google Artifact Registry
-          env:
-            GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-          run: | 
-            echo '${{ secrets.GOOGLE_CREDENTIALS }}' > key.json
-            cat key.json | docker login -u _json_key --password-stdin us-docker.pkg.dev
+      - name: Install Requirements
+        run: pip install -r requirements-build.txt
 
-        - name: Build Imag & Push para Google Registry
-          env: 
-            ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
-            BACKEND_URL: ${{ secrets.BACKEND_URL }}
-          run: | 
-            docker build -t ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest --build-arg BACKEND_URL=${{ secrets.BACKEND_URL }} .
-            docker push ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest
+      #- name: SonarCloud Scan
+      #  uses: sonarsource/sonarcloud-github-action@master  # https://github.com/marketplace/actions/sonarcloud-scan
+      #  env:
+      #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  
+
+      - name: Login Artifactory Registry
+        uses: docker/login-action@v3  # https://github.com/marketplace/actions/docker-login
+        with:
+          registry: ${{ vars.GOOGLE_ARTIFACT }}
+          username: _json_key
+          password: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Build & Push Image
+        run: | 
+          docker build -t ${{ vars.GOOGLE_ARTIFACT }}/${{ vars.GOOGLE_PROJECT_ID }}/${{ vars.GOOGLE_REPONAME }}/${{ vars.GOOGLE_MYAPP }}-front:latest --build-arg BACKEND_URL=${{ secrets.BACKEND_URL }} .
+          docker push ${{ vars.GOOGLE_ARTIFACT }}/${{ vars.GOOGLE_PROJECT_ID }}/${{ vars.GOOGLE_REPONAME }}/${{ vars.GOOGLE_MYAPP }}-front:latest
 
   Deploy:
     needs: Build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone do Repositório
-        uses: actions/checkout@v3
+      - name: Checkout Repo
+        uses: actions/checkout@v4 # https://github.com/actions/checkout
 
-      - name: Autenticação no Google Cloud
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        uses: 'google-github-actions/auth@v0'
+      - name: Auth GCP
+        uses: 'google-github-actions/auth@v1' # https://github.com/google-github-actions/auth
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-      - name: Deploy Frontend no  Cloud Run
-        id: deploy
+      - name: Deploy Frontend - Cloud Run
+        id: deploy-front
         run: |-
           gcloud run deploy frontend \
             --quiet \
             --region  ${{ secrets.GOOGLE_REGION }} \
-            --image ${{ secrets.ARTIFACT_REGISTRY }}/frontend:latest \
+            --image ${{ vars.GOOGLE_ARTIFACT }}/${{ vars.GOOGLE_PROJECT_ID }}/${{ vars.GOOGLE_REPONAME }}/${{ vars.GOOGLE_MYAPP }}-front:latest \
             --platform managed \
             --allow-unauthenticated \
             --project ${{ secrets.GOOGLE_PROJECT_ID }} \
