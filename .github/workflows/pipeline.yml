@@ -51,9 +51,9 @@ jobs:
         run: |-
           gcloud run deploy frontend \
             --quiet \
-            --region  ${{ secrets.GOOGLE_REGION }} \
+            --region  ${{ vars.GOOGLE_REGION }} \
             --image ${{ vars.GOOGLE_ARTIFACT }}/${{ vars.GOOGLE_PROJECT_ID }}/${{ vars.GOOGLE_REPONAME }}/${{ vars.GOOGLE_MYAPP }}-front:latest \
             --platform managed \
             --allow-unauthenticated \
-            --project ${{ secrets.GOOGLE_PROJECT_ID }} \
+            --project ${{ vars.GOOGLE_PROJECT_ID }} \
             --format json
